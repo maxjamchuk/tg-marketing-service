@@ -9,6 +9,8 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from guardian.utils import get_anonymous_user
 
+from apps.users.constants import UserRole
+
 
 class CheckingUserRolesMixin:
     """
@@ -112,21 +114,26 @@ class RoleRequiredMixin(AccessMixin):
 class GuestRequiredMixin(RoleRequiredMixin):
     """Только для неавторизованных пользователей"""
 
-    allowed_roles = ["guest"]
+    allowed_roles = [UserRole.GUEST]
     permission_denied_message = "Эта страница доступна только гостям"
 
 
 class UserRequiredMixin(RoleRequiredMixin):
     """Для всех авторизованных пользователей"""
 
-    allowed_roles = ["user", "partner", "admin", "channel_moderator"]
+    allowed_roles = [
+        UserRole.USER,
+        UserRole.PARTNER,
+        UserRole.ADMIN,
+        UserRole.CHANNEL_MODERATOR,
+    ]
     permission_denied_message = "Требуется авторизация"
 
 
 class PartnerRequiredMixin(RoleRequiredMixin):
     """Только для активных партнеров"""
 
-    allowed_roles = ["partner"]
+    allowed_roles = [UserRole.PARTNER]
     permission_denied_message = "Доступ только для партнеров"
 
     def _test_role(self, request: HttpRequest) -> bool:
@@ -141,7 +148,7 @@ class PartnerRequiredMixin(RoleRequiredMixin):
 class ChannelModeratorRequiredMixin(RoleRequiredMixin):
     """Только для модераторов каналов"""
 
-    allowed_roles = ["channel_moderator"]
+    allowed_roles = [UserRole.CHANNEL_MODERATOR]
     permission_denied_message = "Доступ только для модераторов каналов"
 
     def _test_role(self, request: HttpRequest) -> bool:
@@ -156,12 +163,20 @@ class ChannelModeratorRequiredMixin(RoleRequiredMixin):
 class StaffRequiredMixin(RoleRequiredMixin):
     """Пример добавления новой роли - персонал"""
 
-    allowed_roles = ["staff", "admin"]
+    allowed_roles = [UserRole.STAFF, UserRole.ADMIN]
     permission_denied_message = "Доступ только для сотрудников"
 
 
 class AdminRequiredMixin(RoleRequiredMixin):
     """Только для администраторов"""
 
-    allowed_roles = ["admin"]
+    allowed_roles = [UserRole.ADMIN]
     permission_denied_message = "Доступ только для администраторов"
+
+    def _test_role(self, request: HttpRequest) -> bool:
+        """Дополнительная проверка статуса администратора"""
+        return super()._test_role(request) and (
+            getattr(request, "role", None) == UserRole.ADMIN
+            or getattr(request.user, "is_staff", False)
+            or getattr(request.user, "is_superuser", False)
+        )
