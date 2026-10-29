@@ -242,7 +242,6 @@ class Post(models.Model):
         "views": 1000,
         "forwards": 50,
         "comments_count": 20,
-        "reposts": 10,
         "is_pinned": False,
         "media_type": "photo",
         "permalink": "https://t.me/channel/12345",
@@ -298,11 +297,6 @@ class Post(models.Model):
     comments_count = models.PositiveIntegerField(
         default=0,
         verbose_name="Количество комментариев",
-    )
-
-    reposts = models.PositiveIntegerField(
-        default=0,
-        verbose_name="Количество репостов",
     )
 
     is_pinned = models.BooleanField(
@@ -448,6 +442,11 @@ class PostAnalysis(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="Дата генерации",
+    )
+
+    generated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Дата последней генерации",
     )
 
     model_version = models.CharField(
